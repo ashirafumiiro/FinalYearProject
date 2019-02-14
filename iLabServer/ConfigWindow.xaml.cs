@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net;
+using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
@@ -22,10 +24,11 @@ namespace iLabServer
     public partial class ConfigWindow : Window
     {
         string workingPath = 
-            System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "LabServer");
+            System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "LabServer");
         public ConfigWindow()
         {
             InitializeComponent();
+            labUrlTextBox.Text = GetLocalIPAddress();
         }
 
         private void CancelButtonClick(object sender, RoutedEventArgs e)
@@ -35,11 +38,11 @@ namespace iLabServer
 
         private void SaveButtonClick(object sender, RoutedEventArgs e)
         {
-            string labName = nameTextBox.Text.Trim();
+            string labName = labnameTextBox.Text.Trim();
             bool createLab = false;
             if (deviceCombobox.SelectedIndex != -1 & switchesComboBox.SelectedIndex != -1
                 & channelsComboBox.SelectedIndex != -1 & !labName.Equals("")
-                & !authorTextBox.Text.Trim().Equals(""))  //all fields with values
+                & !authorTextBox.Text.Trim().Equals("") )  //all fields with values
             {
 
                 createLab = true;
@@ -79,67 +82,109 @@ namespace iLabServer
 
         private void CreateFullXDocument(string filename)
         {
-            XDocument labDoc =
-            new XDocument(
-                new XDeclaration("1.0", "utf-8", "yes"),
-                new XComment("The xml data required for starting the lab!"));
-
-            List<Channel> channelsList = new List<Channel>();
+            List<Setting> channelsList = new List<Setting>();
             ComboBoxItem cbi = (ComboBoxItem)channelsComboBox.SelectedItem;
             //create channels list
             for (int i = 0; i <  int.Parse(cbi.Content.ToString()); i++)
             {
-                channelsList.Add(new Channel
+                channelsList.Add(new Setting
                 {
                     Name = "Channel" + i,
-                    Url = labUrlTextBox.Text + "/wave" + i,
-                    DevicePath = "ai" + i  // only support ai pins
+                    Url = "/wave" + i,
+                    DevicePath = "ai" + i,  // only support ai pins
+                    Type = "Channel"
                 }); 
             }
 
-            XElement channelsElement = new XElement("Channels", 
-                from c in channelsList select new XElement("Channel",
-                    new XAttribute("Name",c.Name), new XAttribute("Url", c.Url),
-                    new XAttribute("DevicePath", c.DevicePath))
-                );
-
-
-            cbi = (ComboBoxItem)switchesComboBox.SelectedItem;
-            
-            for (int i = 0; i < int.Parse(cbi.Content.ToString()); i++)
-            {
-                
-            }
-            /*
             XDocument labDoc =
             new XDocument(
                 new XDeclaration("1.0", "utf-8", "yes"),
                 new XComment("The xml data required for starting the lab!"),
-                new XElement("Settings",
-                    new XElement("Setting", new XAttribute("ID", "channel"),
-                    new XElement("Name", "Green"),
-                    new XElement("Url", "BMW"),
-                    new XElement("PetName", "Stan")
-                 ),
-                new XElement("Car", new XAttribute("ID", "2"),
-                    new XElement("Color", "Pink"),
-                    new XElement("Make", "Yugo"),
-                    new XElement("PetName", "Melvin")
+                new XElement("Settings", 
+                from c in channelsList select new XElement("Setting",
+                    new XAttribute("Name",c.Name), new XAttribute("Value", c.Url),
+                    new XAttribute("DevicePath", c.DevicePath),
+                    new XAttribute("Type", c.Type)
                     )
                 )
-            );
+             );
 
+
+            cbi = (ComboBoxItem)switchesComboBox.SelectedItem;
+            List<Setting> switchList = new List<Setting>();
+            
+            for (int i = 0; i < int.Parse(cbi.Content.ToString()); i++)
+            {
+                switchList.Add(new Setting
+                {
+                    Name = "S" + (i+1).ToString(),  //S1 is the first
+                    Url = "S" + (i + 1).ToString(),
+                    DevicePath = "DI" + i,  // First DI is 0
+                    Type = "Switch"
+                }); 
+            }
+
+
+            var switches = from s in switchList select new XElement("Setting",
+                new XAttribute("Name", s.Name), new XAttribute("Value",s.Url),
+                new XAttribute("DevicePath", s.DevicePath),
+                new XAttribute("Type", s.Type));
+            labDoc.Descendants("Settings").First().Add(switches);
+            labDoc.Descendants("Settings").First().Add(
+                new XElement("Setting", new XAttribute("Name", "Lab Name"),
+                    new XAttribute("DevicePath", ""), new XAttribute("Value", labnameTextBox.Text),
+                    new XAttribute("Type", "Info"))
+                    );
+            labDoc.Descendants("Settings").First().Add(
+                new XElement("Setting", new XAttribute("Name", "Lab Author"),
+                    new XAttribute("DevicePath", ""), new XAttribute("Value", authorTextBox.Text),
+                    new XAttribute("Type", "Info"))
+                    );
+            labDoc.Descendants("Settings").First().Add(
+                new XElement("Setting", new XAttribute("Name", "Lab Url"),
+                    new XAttribute("DevicePath", ""), new XAttribute("Value", labUrlTextBox.Text),
+                    new XAttribute("Type", "Info"))
+                    );
+            labDoc.Descendants("Settings").First().Add(
+                new XElement("Setting", new XAttribute("Name", "Api Port"),
+                    new XAttribute("DevicePath", ""), new XAttribute("Value", apiPortTexBox.Text),
+                    new XAttribute("Type", "Info"))
+                    );
+            cbi = (ComboBoxItem)deviceCombobox.SelectedItem;
+            string deviceName = cbi.Content.ToString();
+
+            labDoc.Descendants("Settings").First().Add(
+                new XElement("Setting", new XAttribute("Name", "Device"),
+                    new XAttribute("DevicePath", ""), new XAttribute("Value", deviceName),
+                    new XAttribute("Type", "Info"))
+                    );
+
+            //MessageBox.Show(labDoc.ToString());
             // Save to disk.
             labDoc.Save(filename);
-            */
+            
+        }
+
+        public string GetLocalIPAddress()
+        {
+            var host = Dns.GetHostEntry(Dns.GetHostName());
+            foreach (var ip in host.AddressList)
+            {
+                if (ip.AddressFamily == AddressFamily.InterNetwork)
+                {
+                    return ip.ToString();
+                }
+            }
+            return "";
         }
     }
 
-    public class Channel
+    public class Setting
     {
         public string Name { get; set; }
         public string Url { get; set; }
         public string DevicePath { get; set; }
-
+        public string Type { get; set; }
     }
+
 }

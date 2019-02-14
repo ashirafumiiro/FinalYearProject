@@ -51,9 +51,10 @@ namespace LabServiceLibrary
             if (state)
             {
                 status = LabService.GenerateWave(
+                    sourceDevice: signal.Device,
                     freq: signal.Frequency, 
                     amp: signal.Amplitude,
-                    waveType: signal.WaveType, sourceDevice: Device); 
+                    waveType: signal.WaveType); 
             }
              
             return status;
@@ -76,6 +77,7 @@ namespace LabServiceLibrary
         public double Amplitude { get; set; }
         public double Frequency { get; set; }
         public string WaveType { get; set; }
+        public string Device { get; set; }
 
         public override string ToString()
         {

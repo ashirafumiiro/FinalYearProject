@@ -14,6 +14,7 @@ using NationalInstruments;
 using NationalInstruments.DAQmx;
 using NationalInstruments.DAQmx.ComponentModel;
 using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Threading;
 
@@ -36,7 +37,7 @@ namespace LabServiceLibrary
         private int rate = 10000;  //sample rate
         double minimumValue = -10;
         double maximumValue = 10;
-        int channels = 2;
+        List<Channel> channels;
         string device = "Dev1";
         
         /// <summary>
@@ -56,17 +57,17 @@ namespace LabServiceLibrary
                 container.Add(this);
         }
 
-        public ScopeTaskComponent(IContainer container, string device, int channels, int rate,
-                                    int samplesPerChannel, double minimumValue, double maximumValue) :
-            this(container)
+        public ScopeTaskComponent(IContainer container, string device, List<Channel> channelList,
+                                    int rate, int samplesPerChannel, 
+                                    double minimumValue, double maximumValue)
+            :this(container)
         {
             this.device = device;
-            this.channels = channels;
+            this.channels = channelList;
             this.rate = rate;
             this.samplesPerChannel = samplesPerChannel;
             this.minimumValue = minimumValue;
             this.maximumValue = maximumValue;
-
         }
       
         /// <summary>
@@ -282,25 +283,30 @@ namespace LabServiceLibrary
       
     public class ScopeTask : Task
     {
-        public ScopeTask(string device, int channels,
+        private string device;
+
+        public ScopeTask(string device, List<Channel> channels,
                                     int rate, int samplesPerChannel,
                                     double minimumValue, double maximumValue)
         {
-            Configure(device, channels, rate, samplesPerChannel, minimumValue, maximumValue);
+            this.device = device;
+            Configure(channels, rate, samplesPerChannel, minimumValue, maximumValue);
+
         }
 
-        public virtual void Configure(string device, int channels,
-                                        int rate, int samplesPerChannel,
-                                       double minimumValue, double maximumValue)
+        public virtual void Configure(List<Channel> channels,
+                                         int rate, int samplesPerChannel,
+                                         double minimumValue, double maximumValue)
         {
-            for (int i = 0; i < channels; i++)  // create channels starting at ai0
+            foreach (Channel channel  in channels)
             {
-                AIChannels.CreateVoltageChannel(device+"/ai"+i.ToString(), "Voltage_"+i.ToString(),  //e.g Dev1/ai0
-                                                    AITerminalConfiguration.Differential, 
-                                                    minimumValue, maximumValue, 
-                                                    AIVoltageUnits.Volts);
-            }         
-            Timing.ConfigureSampleClock("", rate, SampleClockActiveEdge.Rising, SampleQuantityMode.FiniteSamples, samplesPerChannel);
+                AIChannels.CreateVoltageChannel(device+"/"+channel.DevicePath,channel.Name, 
+                    AITerminalConfiguration.Differential,
+                    minimumValue, maximumValue, AIVoltageUnits.Volts                    
+                    );
+
+                Timing.ConfigureSampleClock("", rate, SampleClockActiveEdge.Rising, SampleQuantityMode.FiniteSamples, samplesPerChannel);
+            }
         }
     }
 }

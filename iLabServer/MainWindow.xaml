@@ -16,11 +16,12 @@
         <Menu DockPanel.Dock ="Top" HorizontalAlignment="Left" 
               Background="White" BorderBrush ="Black">
             <MenuItem Header="_File">
-                <MenuItem Header="_New"/>
-                <MenuItem Command ="ApplicationCommands.Open"/>
-                <MenuItem Command ="ApplicationCommands.Save"/>
+                <MenuItem Header="_New" Click="OpenConfigClick"/>
+                <MenuItem Command ="ApplicationCommands.Open" Name="openCommand"/>
+                <MenuItem Command ="ApplicationCommands.Save" Name="saveCommand"/>
                 <MenuItem Command ="ApplicationCommands.SaveAs"/>
                 <Separator/>
+                <MenuItem Header ="_Update" Click ="FileUpdate_Click"/>
                 <MenuItem Header ="_Exit" Click ="FileExit_Click"/>
             </MenuItem>
             <MenuItem Header="_Tools">
@@ -34,7 +35,7 @@
         <!--Start toolbar-->
         <ToolBar DockPanel.Dock ="Top" >
 
-            <Button Content ="New" />
+            <Button Content ="New" Click="OpenConfigClick"/>
             <Button Content ="Open" />
             <Button Content ="Help" Cursor="Help" />
             <Separator/>
@@ -66,16 +67,19 @@
                     Lab Controls
                 </Label>
                 <GroupBox Header="Graph Controls" Height="249" Margin="0,0,10,0">
-                    <ni:Graph Height="200" Margin="6,10,-2,0" VerticalAlignment="Top" Width="297"/>
+                    <ni:Graph  Margin="6,10,-2,0" VerticalAlignment="Top" Name="graph1"/>
                 </GroupBox>
 
             </StackPanel>
             <!-- This will be the area where configs are shown -->
             <StackPanel Grid.Column ="1" VerticalAlignment="Stretch">
                 <Label Content="Current Configuration" Margin="10,10,0,0"/>
-                <DataGrid Name="dataGrid">
-                    
-                    
+                <DataGrid Name="xmlDataGrid" AutoGenerateColumns="False">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Name" Binding="{Binding Name}"  />
+                        <DataGridTextColumn Header="Value" Binding="{Binding Value}"  />
+                        <DataGridTextColumn Header="Device Path" Binding="{Binding DevicePath}"  />
+                    </DataGrid.Columns>
                 </DataGrid>
             </StackPanel>
         </Grid>

@@ -19,6 +19,7 @@ using System.Windows.Navigation;
 using System.Windows.Shapes;
 using Microsoft.Win32;
 using System.IO;
+using System.Data;
 
 namespace iLabServer
 {
@@ -28,6 +29,10 @@ namespace iLabServer
     public partial class MainWindow : Window
     {
         DataSocket dataSocket = new DataSocket();
+        string configDirectory = System.IO.Path
+            .Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "LabServer");
+        string currentFile = "";
+        
         public MainWindow()
         {
             InitializeComponent();
@@ -44,8 +49,11 @@ namespace iLabServer
             var openDialog = new OpenFileDialog() { Filter = "Xml Files |*.xml" };
             if (true == openDialog.ShowDialog())
             {
-                string dataFromFile = File.ReadAllText(openDialog.FileName);
-                MessageBox.Show(dataFromFile);
+                //ToDo 
+                //Verify whether it is a valid lab file
+
+
+                GetXmlData(openDialog.FileName);
             }
         }
 
@@ -56,15 +64,16 @@ namespace iLabServer
 
         private void SaveCmdExecuted(object sender, ExecutedRoutedEventArgs e)
         {
-            var saveDlg = new SaveFileDialog { Filter = "xml Files |*.xml" };
-            // Did they click on the OK button?
-            if (true == saveDlg.ShowDialog())
-            {
-                string testData =
-                    @"<Test><Name>Miiro</Name></Test>"; 
-                // Save data in the TextBox to the named file.
-                File.WriteAllText(saveDlg.FileName, testData);
-            }
+            SaveChanges();
+            //var saveDlg = new SaveFileDialog { Filter = "xml Files |*.xml" };
+            //// Did they click on the OK button?
+            //if (true == saveDlg.ShowDialog())
+            //{
+            //    string testData =
+            //        @"<Test><Name>Miiro</Name></Test>"; 
+            //    // Save data in the TextBox to the named file.
+            //    File.WriteAllText(saveDlg.FileName, testData);
+            //}
         }
 
         private void SaveCmdCanExecute(object sender, CanExecuteRoutedEventArgs e)
@@ -80,37 +89,28 @@ namespace iLabServer
             configWindow.ShowDialog();
         }
 
+        private void GetXmlData(string path)
+        {                               
+            DataSet dataSet = new DataSet();
+            dataSet.ReadXml(path);
+            DataView dataView = new DataView(dataSet.Tables[0]);
+            xmlDataGrid.ItemsSource = dataView;
+        }
+
+        private void FileUpdate_Click(object sender, RoutedEventArgs e)
+        {
+            SaveChanges();
+        }
+
+        private void SaveChanges()
+        {
+            DataTable dt = new DataTable();
+            dt = ((DataView)xmlDataGrid.ItemsSource).ToTable();
+            DataSet data = new DataSet("Settings");
+            data.Tables.Add(dt);
+            data.WriteXml(@"C:\Users\ashir\Documents\LabServer\Labs\halfwave.xml");
+            MessageBox.Show("Done");
+        }
+
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-/*
-        private void SetOpenCommandBinding()
-        {
-            CommandBinding openCommand = new CommandBinding(ApplicationCommands.Open);
-            openCommand.CanExecute += OpenCommand_CanExecute;
-            openCommand.Executed += OpenCommand_Executed;
-            CommandBindings.Add(openCommand);
-        }
-
-        private void OpenCommand_Executed(object sender, ExecutedRoutedEventArgs e)
-        {
-            
-        }
-
-        private void OpenCommand_CanExecute(object sender, CanExecuteRoutedEventArgs e)
-        {
-            e.CanExecute = true;
-        }
-        */

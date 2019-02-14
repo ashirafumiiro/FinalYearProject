@@ -17,7 +17,6 @@ namespace LabServiceLibrary
         private System.ComponentModel.IContainer components = null;
         //private NationalInstruments.DAQmx.Task myTask;
         private DataSocketServer dataSocketServer;
-        private List<DataSocket> dataSockets;
         private string baseAddress = "http://localhost:9000/";
 
         //Scope task config
@@ -59,19 +58,18 @@ namespace LabServiceLibrary
             
         }
 
-        public void CreateChannels(int numberOfChannel)
+        public void CreateChannels(List<Channel> channels, string hostAddress)
         {
-            for (int i = 1; i <= numberOfChannel; i++)
+
+            foreach (Channel channel in channels)
             {
                 DataSocket dataSocket = new DataSocket(this.components);
                 ((System.ComponentModel.ISupportInitialize)(dataSocket)).BeginInit();
 
                 ((System.ComponentModel.ISupportInitialize)(dataSocket)).EndInit();
 
-                dataSocket.Url = "dstp://localhost/wave" + i.ToString();
+                dataSocket.Url = "dstp://"+hostAddress+channel.Url;
                 dataSocket.AccessMode = NationalInstruments.Net.AccessMode.WriteAutoUpdate;
-         
-                
             }
         }
 
@@ -119,21 +117,19 @@ namespace LabServiceLibrary
             }
             catch (DaqException err)
             {
-                MessageBox.Show(err.Message);
                 myTask.Dispose();
-                return "Fail";
+                return "Fail" + err.Message;
             }
             myTask.Dispose();
             return "OK";
         }
 
-        private void CreateScopeTask(string device, int channels)
+        private void CreateScopeTask(string device, List<Channel> channels,
+            int samplesPerChannel = 1000,
+            int rate = 10000,  //sample rate
+            double minimumValue = -10,
+            double maximumValue = 10)
         {
-
-            int samplesPerChannel = 1000;
-            int rate = 10000;  //sample rate
-            double minimumValue = -10;
-            double maximumValue = 10;
 
             if (scopeTaskComponent != null)
             {
@@ -181,6 +177,12 @@ namespace LabServiceLibrary
         {
             // Start OWIN host 
             WebApp.Start<Startup>(url: baseAddress);
+        }
+
+        private void CreateLogs(string state, string Message){
+
+
+
         }
 
     }

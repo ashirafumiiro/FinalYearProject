@@ -70,13 +70,13 @@
                         <RowDefinition />
                     </Grid.RowDefinitions>
                     <TextBlock Text="Name" Grid.Column="0"/>
-                    <TextBox Name="nameTextBox"  Grid.Column="1"/>
+                    <TextBox Name="labnameTextBox"  Grid.Column="1"/>
                     <TextBlock Text="Author" Grid.Column="0" Grid.Row="1"/>
                     <TextBox Name="authorTextBox"  Grid.Column="1" Grid.Row="1"/>
                     <TextBlock Text="Lab Url" Grid.Column="0" Grid.Row="2"/>
                     <TextBox Name="labUrlTextBox"  Grid.Column="1" Grid.Row="2"/>
-                    <TextBlock Text="Api Url" Grid.Column="0" Grid.Row="3"/>
-                    <TextBox Name="apiUrlTexBox"  Grid.Column="1" Grid.Row="3"/>
+                    <TextBlock Text="Api Port" Grid.Column="0" Grid.Row="3"/>
+                    <TextBox Name="apiPortTexBox"  Grid.Column="1" Grid.Row="3"/>
                 </Grid>
              </GroupBox>
         </StackPanel>
